@@ -1,0 +1,21 @@
+{
+    "files.associations": {
+        "pid.h": "c",
+        "mbcom.h": "c",
+        "mbslv.h": "c",
+        "mbmst.h": "c",
+        "para_group.h": "c",
+        "para_table.h": "c",
+        "usdk.types.h": "c",
+        "xmemory": "c",
+        "array": "c",
+        "vector": "c",
+        "xstring": "c",
+        "xutility": "c",
+        "stdio.h": "c",
+        "system_error": "c",
+        "uart.h": "c",
+        "cstdio": "c"
+    },
+    "C_Cpp.errorSquiggles": "disabled"
+}
