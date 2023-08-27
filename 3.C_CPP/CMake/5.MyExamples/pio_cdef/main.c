@@ -18,6 +18,7 @@ static const uint16_t blink_program_instructions[] = {
     C_OUT | OUT_DEST_Y | BIT_COUNT_32,
 
     //     .wrap_target
+
     // 0xa022,  2: mov    x, y
     C_MOV | MOV_DEST_X | MOV_SRC_Y,
 
