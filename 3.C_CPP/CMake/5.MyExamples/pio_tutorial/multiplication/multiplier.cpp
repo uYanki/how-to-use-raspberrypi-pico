@@ -22,6 +22,8 @@ int main()
     // needed for printf
     stdio_init_all();
 
+    getchar();
+
     // pio 0 is used
     pio = pio0;
     // state machine 0
@@ -34,9 +36,6 @@ int main()
     pio_sm_init(pio, sm, offset, &c);
     // enable the sm
     pio_sm_set_enabled(pio, sm, true);
-
-    // wait for any character to run code
-    getchar(); 
 
     pio_mul(1, 1);
     pio_mul(0, 1);
