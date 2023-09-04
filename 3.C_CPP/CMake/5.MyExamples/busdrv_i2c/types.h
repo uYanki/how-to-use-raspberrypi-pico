@@ -13,15 +13,42 @@ typedef unsigned int size_t;
 
 #define BV(n)             (1u << (n))
 
+// pin level
 typedef enum {
     LOW = 0,
     HIGH,
-} pin_level_t;
+} pin_lvl_e;
 
 typedef enum {
     OUT = 0,
     IN,
-} pin_dir_t;
+} pin_dir_e;
+
+typedef enum {
+    BYTE_ORDER_BIG_ENDIAN,     // 大端 (高字节在低地址)
+    BYTE_ORDER_LITTLE_ENDIAN,  // 小端 (低字节在)
+} endian_e;
+
+/**
+ * @brief endian
+ *
+ *    0x1234 in memery ?
+ *
+ *       address:    low -> high
+ *
+ *      big endian:   12    34
+ *   little endian:   34    12
+ *
+ *    so: 大端模式下, 内存模式和数字书写顺序时一致的, 方便阅读理解
+ *        小段模式下, 量指针转换的时候地址保持不变，比如 int64* 转到 int32*
+ */
+
+typedef enum {
+    UINT_FORMAT_BIN = 0,  // binary
+    UINT_FORMAT_DEC = 1,  // decimal
+    UINT_FORMAT_HEX = 2,  // hexadecimal
+    UINT_FORMAT_BCD = 3,
+} uint_fmt_e;
 
 #define INLINE inline
 

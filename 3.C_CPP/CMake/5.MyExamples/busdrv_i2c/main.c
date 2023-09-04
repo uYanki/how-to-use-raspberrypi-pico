@@ -4,37 +4,37 @@
 
 #include "swi2c.h"
 
-static void swi2c_set_sda(void* port, pin_level_t level)
+static void swi2c_set_sda(void* port, pin_lvl_e level)
 {
     swi2c_cfg_t* cfg = (swi2c_cfg_t*)port;
     gpio_put(cfg->sda, level == LOW ? 0 : 1);
 }
 
-static void swi2c_set_scl(void* port, pin_level_t level)
+static void swi2c_set_scl(void* port, pin_lvl_e level)
 {
     swi2c_cfg_t* cfg = (swi2c_cfg_t*)port;
     gpio_put(cfg->scl, level == LOW ? 0 : 1);
 }
 
-static pin_level_t swi2c_get_sda(void* port)
+static pin_lvl_e swi2c_get_sda(void* port)
 {
     swi2c_cfg_t* cfg = (swi2c_cfg_t*)port;
     return gpio_get(cfg->sda) == 0 ? LOW : HIGH;
 }
 
-static pin_level_t swi2c_get_scl(void* port)
+static pin_lvl_e swi2c_get_scl(void* port)
 {
     swi2c_cfg_t* cfg = (swi2c_cfg_t*)port;
     return gpio_get(cfg->scl) == 0 ? LOW : HIGH;
 }
 
-void swi2c_cfg_sda(void* port, pin_dir_t dir)
+void swi2c_cfg_sda(void* port, pin_dir_e dir)
 {
     swi2c_cfg_t* cfg = (swi2c_cfg_t*)port;
     gpio_set_dir(cfg->sda, dir == OUT ? GPIO_OUT : GPIO_IN);
 }
 
-void swi2c_cfg_scl(void* port, pin_dir_t dir)
+void swi2c_cfg_scl(void* port, pin_dir_e dir)
 {
     swi2c_cfg_t* cfg = (swi2c_cfg_t*)port;
     gpio_set_dir(cfg->scl, dir == OUT ? GPIO_OUT : GPIO_IN);
@@ -57,13 +57,19 @@ void swi2c_demo(void)
         .get_sda  = swi2c_get_sda,
         .get_scl  = swi2c_get_scl,
         .delay    = sleep_us,
-        .interval = 1,
+        .interval = 5,
         .timeout  = 100,
     };
 
-    i2c_dev_t dev = {
+    i2c_bus_t bus = {
         .drv = &drv,
         .ops = &g_swi2c_ops,
+    };
+
+    // ssd1306
+    i2c_dev_t dev = {
+        .bus  = &bus,
+        .addr = 0x3C,
     };
 
     println("%s", cfg.name);
@@ -80,7 +86,7 @@ void swi2c_demo(void)
         switch (demo) {
             case 1: {
                 // address scan
-                i2cmst_scan(&dev);
+                i2cmst_scanner(&bus);
                 break;
             }
             case 2: {
@@ -89,17 +95,13 @@ void swi2c_demo(void)
                     .addr = 0x10,
                     .dat  = (uint8_t[]){0x11, 0x22, 0x33, 0x44},
                     .len  = 4,
-                    .flgs = I2C_MASTER_WRITE |
-                            I2C_MASTER_ADDRESS_MODE_7BIT |
-                            I2C_MASTER_GENERATE_START_SINGAL |
-                            I2C_MASTER_GENERATE_STOP_SINGAL |
-                            I2C_MASTER_GENERATE_ACK_NACK_SINGAL,
+                    .flgs = I2CMST_WRITE | I2CMST_ADDR_7BIT,
                 };
 
-                i2cmst_xfer(&dev, &msg, 1);
+                i2cmst_xfer(&bus, &msg, 1);
                 sleep_ms(200);
-                msg.flgs |= I2C_MASTER_IGNORE_NACK;
-                i2cmst_xfer(&dev, &msg, 1);
+                msg.flgs |= I2CMST_IGNORE_NACK;
+                i2cmst_xfer(&bus, &msg, 1);
 
                 printf(".");
                 break;
@@ -115,7 +117,7 @@ void swi2c_demo(void)
                     ssd1306_init(&dev);
                 }
 
-                static uint8_t color = 0x03;
+                static uint8_t color = 0x0F;
                 ssd1306_fill(&dev, color);
                 color = ~color;
             }
@@ -183,7 +185,7 @@ void ssd1306_init(i2c_dev_t* dev)
         0xaf,
     };
 
-    i2cmst_write_bytes(dev, 0x3c, 0x00, cmd, sizeof(cmd));
+    i2cdev_write_bytes(dev, 0x00, cmd, sizeof(cmd));
 }
 
 void ssd1306_fill(i2c_dev_t* dev, uint8_t color)
@@ -193,12 +195,12 @@ void ssd1306_fill(i2c_dev_t* dev, uint8_t color)
     uint8_t y0 = 0;
     uint8_t y1 = 7;
 
-    uint8_t cmd[6] = {
+    uint8_t cmd[] = {
         0x21, x0, x1,  // col
         0x22, y0, y1,  // row
     };
 
-    i2cmst_write_bytes(dev, 0x3c, 0x00, cmd, sizeof(cmd));
+    i2cdev_write_bytes(dev, 0x00, cmd, sizeof(cmd));
 
     uint8_t dat[16];
     uint8_t cnt = sizeof(dat);
@@ -208,6 +210,6 @@ void ssd1306_fill(i2c_dev_t* dev, uint8_t color)
 
     cnt = 64;
     while (cnt--) {
-        i2cmst_write_bytes(dev, 0x3c, 0x40, dat, sizeof(dat));
+        i2cdev_write_bytes(dev, 0x40, dat, sizeof(dat));
     }
 }

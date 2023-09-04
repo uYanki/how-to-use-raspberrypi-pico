@@ -9,12 +9,13 @@ pico_sdk_init()
 
 add_executable(${PROJECT_NAME} 
         main.c
-        i2c.c
-        swi2c.c
-        hwi2c.c
 )
+
+
+add_subdirectory(lib)
+
 # pull in common dependencies and additional i2c hardware support
-target_link_libraries(${PROJECT_NAME} PUBLIC pico_stdlib hardware_i2c)
+target_link_libraries(${PROJECT_NAME} PUBLIC pico_stdlib hardware_i2c i2cdev)
 
 pico_enable_stdio_uart(${PROJECT_NAME} 0)
 pico_enable_stdio_usb(${PROJECT_NAME} 1)

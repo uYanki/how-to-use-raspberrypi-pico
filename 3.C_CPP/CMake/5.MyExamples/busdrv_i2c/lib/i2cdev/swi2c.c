@@ -237,7 +237,7 @@ static err_t swi2c_send_ack_or_nack(swi2c_drv_t* drv, __IN swi2c_ack_t ack)
     return ret;
 }
 
-static err_t swi2c_master_xfer(i2c_dev_t* dev, __IN i2c_msg_t* msgs, __IN uint16_t cnt)
+static err_t swi2c_master_xfer(i2c_bus_t* bus, __IN i2c_msg_t* msgs, __IN uint16_t cnt)
 {
     swi2c_drv_t* drv;
     i2c_msg_t*   msg;
@@ -251,7 +251,7 @@ static err_t swi2c_master_xfer(i2c_dev_t* dev, __IN i2c_msg_t* msgs, __IN uint16
 
     err_t ret;
 
-    drv = (swi2c_drv_t*)(dev->drv);
+    drv = (swi2c_drv_t*)(bus->drv);
 
     for (i = 0; i < cnt; ++i) {
         msg  = &msgs[i];
@@ -260,7 +260,7 @@ static err_t swi2c_master_xfer(i2c_dev_t* dev, __IN i2c_msg_t* msgs, __IN uint16
         //------------------------------------------------------------------------------------------------//
         // generate start singal
         //
-        if (flgs & I2C_MASTER_GENERATE_START_SINGAL) {
+        if (!(flgs & I2CMST_NO_START)) {
             uint8_t addr, subaddr;
             uint8_t retries = 5;  // retry
 
@@ -268,14 +268,14 @@ static err_t swi2c_master_xfer(i2c_dev_t* dev, __IN i2c_msg_t* msgs, __IN uint16
 
             // send address
 
-            if (flgs & I2C_MASTER_ADDRESS_MODE_10BIT) {
+            if (flgs & I2CMST_ADDR_10BIT) {
                 // 10-bit addr
                 addr    = ((msg->addr >> 7) & 0x06) | 0xf0;
                 subaddr = msg->addr & 0xff;
             } else {
                 // 7-bit addr
                 addr = (msg->addr << 1) & 0xFF;
-                if (flgs & I2C_MASTER_RAED) { addr |= 1; }
+                if (flgs & I2CMST_RAED) { addr |= 1; }
             }
 
             // sending first addr
@@ -283,7 +283,7 @@ static err_t swi2c_master_xfer(i2c_dev_t* dev, __IN i2c_msg_t* msgs, __IN uint16
                 ret = swi2c_write_byte(drv, addr, &ack);
                 if (IS_OK(ret)) {
                     // check ack
-                    if ((ack == ACK) || (flgs & I2C_MASTER_IGNORE_NACK)) {
+                    if ((ack == ACK) || (flgs & I2CMST_IGNORE_NACK)) {
                         break;  // ack
                     } else {
                         ret = ERR_TIMEOUT;  // nack
@@ -300,13 +300,13 @@ static err_t swi2c_master_xfer(i2c_dev_t* dev, __IN i2c_msg_t* msgs, __IN uint16
                 }
             }
 
-            if (flgs & I2C_MASTER_ADDRESS_MODE_10BIT) {
+            if (flgs & I2CMST_ADDR_10BIT) {
                 // sending second addr
                 while (0) {
                     ret = swi2c_write_byte(drv, subaddr, &ack);
                     if (IS_OK(ret)) {
                         // check ack
-                        if ((ack == ACK) || (flgs & I2C_MASTER_IGNORE_NACK)) {
+                        if ((ack == ACK) || (flgs & I2CMST_IGNORE_NACK)) {
                             break;  // ack
                         }
                         ret = ERR_TIMEOUT;  // nack
@@ -314,7 +314,7 @@ static err_t swi2c_master_xfer(i2c_dev_t* dev, __IN i2c_msg_t* msgs, __IN uint16
                     goto error;
                 }
 
-                if (flgs & I2C_MASTER_RAED) {
+                if (flgs & I2CMST_RAED) {
                     addr |= 1;
                 }
                 // repeated start condition
@@ -322,7 +322,7 @@ static err_t swi2c_master_xfer(i2c_dev_t* dev, __IN i2c_msg_t* msgs, __IN uint16
                     ret = swi2c_write_byte(drv, addr, &ack);
                     if (IS_OK(ret)) {
                         // check ack
-                        if ((ack == ACK) || (flgs & I2C_MASTER_IGNORE_NACK)) {
+                        if ((ack == ACK) || (flgs & I2CMST_IGNORE_NACK)) {
                             break;  // ack
                         }
                         ret = ERR_TIMEOUT;  // nack
@@ -338,19 +338,17 @@ static err_t swi2c_master_xfer(i2c_dev_t* dev, __IN i2c_msg_t* msgs, __IN uint16
         dat = msg->dat;
         len = msg->len;
         // check action
-        if (flgs & I2C_MASTER_RAED) {
+        if (flgs & I2CMST_RAED) {
             // read bytes
             while (len--) {
                 // read data
                 ret = swi2c_read_byte(drv, dat++);
                 if (IS_OK(ret)) {
+                    // skip ack
+                    if (flgs & I2CMST_NO_ACK) { continue; }
                     // send ack
-                    if (flgs & I2C_MASTER_GENERATE_ACK_NACK_SINGAL) {
-                        ret = swi2c_send_ack_or_nack(drv, (len == 0) ? NACK : ACK);
-                        if (IS_OK(ret)) {
-                            continue;
-                        }
-                    }
+                    ret = swi2c_send_ack_or_nack(drv, (len == 0) ? NACK : ACK);
+                    if (IS_OK(ret)) { continue; }
                 }
                 goto error;
             }
@@ -360,8 +358,10 @@ static err_t swi2c_master_xfer(i2c_dev_t* dev, __IN i2c_msg_t* msgs, __IN uint16
                 // write data and read ack
                 ret = swi2c_write_byte(drv, *dat++, &ack);
                 if (IS_OK(ret)) {
-                    if ((ack == ACK) || (flgs & I2C_MASTER_IGNORE_NACK)) {
+                    if ((ack == ACK) || (flgs & I2CMST_IGNORE_NACK)) {
                         continue;
+                    } else {
+                        ret = ERR_TIMEOUT;
                     }
                 }
                 goto error;
@@ -371,7 +371,7 @@ static err_t swi2c_master_xfer(i2c_dev_t* dev, __IN i2c_msg_t* msgs, __IN uint16
         //------------------------------------------------------------------------------------------------//
         // generate stop singal
         //
-        if (flgs & I2C_MASTER_GENERATE_STOP_SINGAL) {
+        if (!(flgs & I2CMST_NO_STOP)) {
             swi2c_stop(drv);
         }
     }
@@ -380,7 +380,7 @@ static err_t swi2c_master_xfer(i2c_dev_t* dev, __IN i2c_msg_t* msgs, __IN uint16
 
 error:
 
-    if (!(flgs & I2C_MASTER_ERROR_TRIGGER_NONE)) {
+    if (!(flgs & I2CMST_ERR_SKIP)) {
         swi2c_stop(drv);
     }
 
