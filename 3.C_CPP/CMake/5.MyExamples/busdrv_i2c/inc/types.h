@@ -29,20 +29,6 @@ typedef enum {
     BYTE_ORDER_LITTLE_ENDIAN,  // 小端 (低字节在)
 } endian_e;
 
-/**
- * @brief endian
- *
- *    0x1234 in memery ?
- *
- *       address:    low -> high
- *
- *      big endian:   12    34
- *   little endian:   34    12
- *
- *    so: 大端模式下, 内存模式和数字书写顺序时一致的, 方便阅读理解
- *        小段模式下, 量指针转换的时候地址保持不变，比如 int64* 转到 int32*
- */
-
 typedef enum {
     UINT_FORMAT_BIN = 0,  // binary
     UINT_FORMAT_DEC = 1,  // decimal

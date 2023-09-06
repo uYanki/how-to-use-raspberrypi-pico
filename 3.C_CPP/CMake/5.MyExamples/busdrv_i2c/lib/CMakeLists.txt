@@ -1,1 +1,1 @@
-include_directories(i2cdev)
+add_subdirectory(i2cdev)

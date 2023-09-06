@@ -1,5 +1,8 @@
 {
     "files.associations": {
-        "i2c.h": "c"
+        "i2c.h": "c",
+        "types.h": "c",
+        "swi2c.h": "c",
+        "hwi2c.h": "c"
     }
 }

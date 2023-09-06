@@ -7,22 +7,22 @@ project(i2c_scanner C CXX ASM)
 
 pico_sdk_init()
 
+set(USDK_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/inc)
+
+include_directories(${USDK_INCLUDE_DIR})
+
 add_executable(${PROJECT_NAME} 
         main.c
 )
 
-
 add_subdirectory(lib)
 
-# pull in common dependencies and additional i2c hardware support
-target_link_libraries(${PROJECT_NAME} PUBLIC pico_stdlib hardware_i2c i2cdev)
+target_link_libraries(${PROJECT_NAME} PUBLIC pico_stdlib i2cdev)
 
 pico_enable_stdio_uart(${PROJECT_NAME} 0)
 pico_enable_stdio_usb(${PROJECT_NAME} 1)
 
 # create map/bin/hex file etc.
 pico_add_extra_outputs(${PROJECT_NAME})
-
-
 
 

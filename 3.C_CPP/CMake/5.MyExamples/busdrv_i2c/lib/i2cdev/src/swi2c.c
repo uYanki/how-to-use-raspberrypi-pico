@@ -46,7 +46,6 @@ static err_t _SCL_H(swi2c_drv_t* drv)
         // scl pulled down by slave
         //  ( slave is drvy )
         while (GET_SCL() == LOW) {
-            Delay();
             t += drv->interval;
             if (t > drv->timeout) {
                 SCL_OUT();
@@ -94,6 +93,7 @@ static void swi2c_start(swi2c_drv_t* drv, bool restart)
     SCL_OUT();
 
     if (restart) {
+        Delay();
         SDA_H();  // sda = 1
         SCL_H();  // scl = 1
         Delay();
@@ -123,9 +123,7 @@ static err_t swi2c_write_byte(swi2c_drv_t* drv, __IN uint8_t dat, __OUT swi2c_ac
     /* write byte */
 
     do {
-        // scl = 0
         SCL_L();
-
         // sda = x
         if (dat & msk) {
             SDA_H();
@@ -137,26 +135,28 @@ static err_t swi2c_write_byte(swi2c_drv_t* drv, __IN uint8_t dat, __OUT swi2c_ac
 
         // scl = 1
         ret = SCL_H();
+        Delay();
         if (IS_ERR(ret)) {
             return ret;
         }
-
-        Delay();
 
     } while (msk >>= 1);
 
     /* recv ack or nack */
 
-    SCL_L();  // scl = 0
-    SDA_H();  // sda = 1
+    // scl = 0
+    SCL_L();
+    // sda = 1
+    SDA_H();
 
     // set sda as input mode
     SDA_IN();
     Delay();
 
+    // scl = 1
     ret = SCL_H();
+    Delay();
     if (IS_OK(ret)) {
-        Delay();
         // read sda
         switch (GET_SDA()) {
             case LOW: {
@@ -171,6 +171,8 @@ static err_t swi2c_write_byte(swi2c_drv_t* drv, __IN uint8_t dat, __OUT swi2c_ac
         }
         ret = SUCCESS;
     }
+    // scl = 0
+    SCL_L();
 
     // set sda as output mode
     SDA_OUT();
@@ -186,17 +188,22 @@ static err_t swi2c_read_byte(swi2c_drv_t* drv, __OUT uint8_t* dat)
     // reset buff
     *dat = 0x00;
 
+    // release sda line
+    SDA_H();
+
     // set sda as input mode
     SDA_IN();
 
     do {
-        SCL_L();  // scl = 0
+        // scl = 0
+        SCL_L();
         Delay();
-        ret = SCL_H();  // scl = 1
+        // scl = 1
+        ret = SCL_H();
+        Delay();
         if (IS_ERR(ret)) {
             goto exit;
         }
-        Delay();
         // read sda
         if (GET_SDA() == HIGH) {
             *dat |= msk;
@@ -216,23 +223,30 @@ static err_t swi2c_send_ack_or_nack(swi2c_drv_t* drv, __IN swi2c_ack_t ack)
 {
     err_t ret;
 
-    SCL_L();  // scl = 0
+    // scl = 0
+    SCL_L();
     switch (ack) {
         default:
         case NACK:
-            SDA_H();  // sda = 1
+            // sda = 1
+            SDA_H();
             break;
         case ACK:
-            SDA_L();  // sda = 0
+            // sda = 0
+            SDA_L();
             break;
     }
     Delay();
 
     // scl = 1
     ret = SCL_H();
+    Delay();
     if (IS_OK(ret)) {
         ret = SUCCESS;
     }
+
+    // scl = 0
+    SCL_L();
 
     return ret;
 }

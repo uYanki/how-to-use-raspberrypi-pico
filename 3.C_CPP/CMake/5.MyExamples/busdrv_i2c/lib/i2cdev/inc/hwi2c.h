@@ -3,16 +3,20 @@
 
 #include "types.h"
 
+#include "hardware/i2c.h"
+
 typedef struct {
     const char* name;
-    void*       handle;
-    int8_t      sda;
-    int8_t      scl;
+
+    void*  handle;
+    int8_t sda;
+    int8_t scl;
+
+    uint32_t bitrate;
 } hwi2c_cfg_t;
 
 typedef struct {
-    void*    port;  // hwi2c_cfg_t
-    uint32_t timeout;
+    void* port;  // hwi2c_cfg_t
 } hwi2c_drv_t;
 
 #endif
