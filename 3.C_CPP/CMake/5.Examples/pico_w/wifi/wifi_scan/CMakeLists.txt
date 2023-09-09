@@ -12,6 +12,8 @@ target_link_libraries(picow_wifi_scan_background
 
 pico_add_extra_outputs(picow_wifi_scan_background)
 
+pico_enable_stdio_usb(picow_wifi_scan_background 1)
+
 add_executable(picow_wifi_scan_poll
         picow_wifi_scan.c
         )
@@ -25,3 +27,4 @@ target_link_libraries(picow_wifi_scan_poll
         )
 pico_add_extra_outputs(picow_wifi_scan_poll)
 
+pico_enable_stdio_usb(picow_wifi_scan_poll 1)

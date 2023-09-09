@@ -139,6 +139,12 @@ cd blink
 mingw32-make
 ```
 
+注：如构建的时 PicoW，请使用如下指令，否则无法编译 wifi/ble 相关例程。
+
+```shell
+cmake  ..  -G "MinGW Makefiles" -DPICO_BOARD=pico_w
+```
+
 ##### ③ VSCode
 
 ![5](.assest/5.png)
