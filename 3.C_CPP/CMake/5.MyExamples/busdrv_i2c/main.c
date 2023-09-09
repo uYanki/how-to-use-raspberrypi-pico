@@ -45,8 +45,8 @@ i2c_bus_t* swi2c_init(void)
 {
     static swi2c_cfg_t cfg = {
         .name = "swi2c-bus",
-        .sda  = 0,
-        .scl  = 1,
+        .sda  = 4,
+        .scl  = 5,
     };
 
     static swi2c_drv_t drv = {
@@ -85,16 +85,29 @@ static err_t hwi2c_master_xfer(i2c_bus_t* bus, __IN i2c_msg_t* msgs, __IN uint16
     hwi2c_drv_t* drv = (hwi2c_drv_t*)(bus->drv);
     hwi2c_cfg_t* cfg = (hwi2c_cfg_t*)(drv->port);
 
+    struct i2c_inst* i2c = (struct i2c_inst*)(cfg->handle);
+
     uint16_t idx = 0;
-    bool     nostop;
+
+    int err;
 
     for (idx = 0; idx < cnt; ++idx) {
-        msg    = &msgs[idx];
-        nostop = msg->flgs & I2CMST_NO_STOP;
+        msg = &msgs[idx];
+
+        if (msg->flgs & I2CMST_NO_START) {  // necessary
+            i2c->restart_on_next = false;
+        }
+
         if (msg->flgs & I2CMST_RAED) {
-            i2c_read_blocking(cfg->handle, msg->addr, msg->dat, msg->len, &nostop);
+            err = i2c_read_timeout_per_char_us(i2c, msg->addr, msg->dat, msg->len, msg->flgs & I2CMST_NO_STOP, drv->timeout);
+            if (err == PICO_ERROR_GENERIC) {
+                return ERR_TIMEOUT;
+            }
         } else {
-            i2c_write_blocking(cfg->handle, msg->addr, msg->dat, msg->len, &nostop);
+            err = i2c_write_timeout_us(i2c, msg->addr, msg->dat, msg->len, msg->flgs & I2CMST_NO_STOP, drv->timeout);
+            if (err == PICO_ERROR_GENERIC) {
+                return ERR_TIMEOUT;
+            }
         }
     }
 
@@ -106,18 +119,19 @@ i2c_bus_t* hwi2c_init()
     static hwi2c_cfg_t cfg = {
         .name    = "hwi2c-bus",
         .handle  = i2c0,
-        .sda     = 0,
-        .scl     = 1,
-        .bitrate = 400000U,
+        .sda     = 4,
+        .scl     = 5,
+        .bitrate = 400 * 1000U,
     };
 
     static i2c_ops_t hwi2c_ops = {
         .xfer  = hwi2c_master_xfer,
-        .ioctl = nullptr,
+        .ioctl = nullptr,  // set bitrate or ...
     };
 
     static hwi2c_drv_t drv = {
-        .port = &cfg,
+        .port    = &cfg,
+        .timeout = 100,  // us
     };
 
     static i2c_bus_t bus = {
@@ -143,11 +157,13 @@ int main()
 {
     stdio_init_all();
 
-    // i2c_bus_t* bus = swi2c_init();
+#if 0
+    i2c_bus_t* bus = swi2c_init();
+#else
     i2c_bus_t* bus = hwi2c_init();
+#endif
 
-    // demo switch
-    switch (4) {
+    switch (4) {  // demo switch
         default:
         case 1: {
             void scanner_demo(i2c_bus_t * bus);
@@ -166,6 +182,7 @@ int main()
         }
         case 4: {
             void mpu6050_demo(i2c_bus_t * bus);
+            getchar();  // wait a char and then run demo
             mpu6050_demo(bus);
             break;
         }
@@ -308,7 +325,7 @@ void mpu6050_demo(i2c_bus_t* bus)
         float gz  = (int16_t)((buf[12] << 8) | buf[13]) / 65.5;
 
         printf("%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n",
-               ax, ay, az, tmp, gx, gy, gz);
+               ax, ay, az, gx, gy, gz, tmp);
 #endif
         sleep_ms(100);
     }

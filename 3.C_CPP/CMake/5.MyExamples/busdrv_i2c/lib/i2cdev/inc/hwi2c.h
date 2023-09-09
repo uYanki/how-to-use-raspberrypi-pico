@@ -16,7 +16,8 @@ typedef struct {
 } hwi2c_cfg_t;
 
 typedef struct {
-    void* port;  // hwi2c_cfg_t
+    void*    port;  // hwi2c_cfg_t
+    uint64_t timeout;
 } hwi2c_drv_t;
 
 #endif

@@ -73,41 +73,41 @@ static inline err_t i2cmst_xfer(i2c_bus_t* bus, i2c_msg_t* msgs, uint16_t cnt) {
 
 //
 
-err_t i2cmst_read_bytes(i2c_bus_t* bus, uint16_t addr, uint8_t reg, uint8_t* dat, uint16_t len);
-err_t i2cmst_write_bytes(i2c_bus_t* bus, uint16_t addr, uint8_t reg, uint8_t* dat, uint16_t len);
+err_t i2cmst_read_bytes(i2c_bus_t* bus, uint16_t addr, uint16_t reg, uint8_t* dat, uint16_t len);
+err_t i2cmst_write_bytes(i2c_bus_t* bus, uint16_t addr, uint16_t reg, uint8_t* dat, uint16_t len);
 
-static inline err_t i2cmst_read_byte(i2c_bus_t* bus, uint16_t addr, uint8_t reg, uint8_t* dat) { return i2cmst_read_bytes(bus, addr, reg, dat, 1); }
-static inline err_t i2cmst_write_byte(i2c_bus_t* bus, uint16_t addr, uint8_t reg, uint8_t dat) { return i2cmst_write_bytes(bus, addr, reg, &dat, 1); }
+static inline err_t i2cmst_read_byte(i2c_bus_t* bus, uint16_t addr, uint16_t reg, uint8_t* dat) { return i2cmst_read_bytes(bus, addr, reg, dat, 1); }
+static inline err_t i2cmst_write_byte(i2c_bus_t* bus, uint16_t addr, uint16_t reg, uint8_t dat) { return i2cmst_write_bytes(bus, addr, reg, &dat, 1); }
 
 //
 
-static inline err_t i2cdev_read_bytes(i2c_dev_t* dev, uint8_t reg, uint8_t* dat, uint16_t len) { return i2cmst_read_bytes(dev->bus, dev->addr, reg, dat, len); }
-static inline err_t i2cdev_write_bytes(i2c_dev_t* dev, uint8_t reg, uint8_t* dat, uint16_t len) { return i2cmst_write_bytes(dev->bus, dev->addr, reg, dat, len); }
+static inline err_t i2cdev_read_bytes(i2c_dev_t* dev, uint16_t reg, uint8_t* dat, uint16_t len) { return i2cmst_read_bytes(dev->bus, dev->addr, reg, dat, len); }
+static inline err_t i2cdev_write_bytes(i2c_dev_t* dev, uint16_t reg, uint8_t* dat, uint16_t len) { return i2cmst_write_bytes(dev->bus, dev->addr, reg, dat, len); }
 
-static inline err_t i2cdev_read_byte(i2c_dev_t* dev, uint8_t reg, uint8_t* dat) { return i2cdev_read_bytes(dev, reg, dat, 1); }
-static inline err_t i2cdev_write_byte(i2c_dev_t* dev, uint8_t reg, uint8_t dat) { return i2cdev_write_bytes(dev, reg, &dat, 1); }
+static inline err_t i2cdev_read_byte(i2c_dev_t* dev, uint16_t reg, uint8_t* dat) { return i2cdev_read_bytes(dev, reg, dat, 1); }
+static inline err_t i2cdev_write_byte(i2c_dev_t* dev, uint16_t reg, uint8_t dat) { return i2cdev_write_bytes(dev, reg, &dat, 1); }
 
-err_t i2cdev_read_word(i2c_dev_t* dev, uint8_t reg, uint16_t* dat, endian_e endian);
-err_t i2cdev_write_word(i2c_dev_t* dev, uint8_t reg, uint16_t dat, endian_e endian);
+err_t i2cdev_read_word(i2c_dev_t* dev, uint16_t reg, uint16_t* dat, endian_e endian);
+err_t i2cdev_write_word(i2c_dev_t* dev, uint16_t reg, uint16_t dat, endian_e endian);
 
-err_t i2cdev_read_mask(i2c_dev_t* dev, uint8_t reg, uint8_t msk, uint8_t* dat);
-err_t i2cdev_write_mask(i2c_dev_t* dev, uint8_t reg, uint8_t msk, uint8_t dat);
+err_t i2cdev_read_mask(i2c_dev_t* dev, uint16_t reg, uint8_t msk, uint8_t* dat);
+err_t i2cdev_write_mask(i2c_dev_t* dev, uint16_t reg, uint8_t msk, uint8_t dat);
 
-static inline err_t i2cdev_read_bits(i2c_dev_t* dev, uint8_t reg, uint8_t stb, uint8_t len, uint8_t* dat)
+static inline err_t i2cdev_read_bits(i2c_dev_t* dev, uint16_t reg, uint8_t stb, uint8_t len, uint8_t* dat)
 {
     uint8_t msk = (~(0xFF << len)) << stb;
     err_t   ret = i2cdev_read_mask(dev, reg, msk, dat);
     if (IS_OK(ret)) { *dat >>= stb; }
     return ret;
 }
-static inline err_t i2cdev_write_bits(i2c_dev_t* dev, uint8_t reg, uint8_t stb, uint8_t len, uint8_t dat)
+static inline err_t i2cdev_write_bits(i2c_dev_t* dev, uint16_t reg, uint8_t stb, uint8_t len, uint8_t dat)
 {
     uint8_t msk = (~(0xFF << len)) << stb;
     return i2cdev_write_mask(dev, reg, msk, dat << stb);
 }
 
-static inline err_t i2cdev_read_bit(i2c_dev_t* dev, uint8_t reg, uint8_t bit, uint8_t* dat) { return i2cdev_read_bits(dev, reg, bit, 1, dat); }
-static inline err_t i2cdev_write_bit(i2c_dev_t* dev, uint8_t reg, uint8_t bit, uint8_t dat) { return i2cdev_write_bits(dev, reg, bit, 1, dat ? 1 : 0); }
+static inline err_t i2cdev_read_bit(i2c_dev_t* dev, uint16_t reg, uint8_t bit, uint8_t* dat) { return i2cdev_read_bits(dev, reg, bit, 1, dat); }
+static inline err_t i2cdev_write_bit(i2c_dev_t* dev, uint16_t reg, uint8_t bit, uint8_t dat) { return i2cdev_write_bits(dev, reg, bit, 1, dat ? 1 : 0); }
 
 //
 
@@ -139,20 +139,5 @@ err_t i2cdev_viewer(i2c_dev_t* dev, uint8_t start, uint8_t end, uint_fmt_e fmt);
  * @return status code
  */
 err_t i2cdev_mapper(i2c_dev_t* dev, uint8_t pairs[][2], uint16_t cnt);
-
-/**
- * @brief  Read an amount of data in blocking mode from a specific memory address
- * @param  hi2c Pointer to a I2C_HandleTypeDef structure that contains
- *                the configuration information for the specified I2C.
- * @param  DevAddress Target device address: The device 7 bits address value
- *         in datasheet must be shifted to the left before calling the interface
- * @param  MemAddress Internal memory address
- * @param  MemAddSize Size of internal memory address
- * @param  pData Pointer to data buffer
- * @param  Size Amount of data to be sent
- * @param  Timeout Timeout duration
- * @retval HAL status
- */
-// HAL_StatusTypeDef HAL_I2C_Mem_Read(I2C_HandleTypeDef* hi2c, uint16_t DevAddress, uint16_t MemAddress, uint16_t MemAddSize, uint8_t* pData, uint16_t Size, uint32_t Timeout)
 
 #endif

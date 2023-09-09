@@ -5,12 +5,20 @@ uint8_t i2cmst_scanner(i2c_bus_t* bus)
     uint8_t cnt = 0;
     uint8_t step;
 
-    i2c_msg_t msg = {
-        .addr = 0,
-        .dat  = nullptr,
-        .len  = 0,
-        .flgs = I2CMST_RAED | I2CMST_ADDR_7BIT,
-    };
+    i2c_msg_t msg;
+
+    msg.addr = 0;
+    msg.flgs = I2CMST_RAED | I2CMST_ADDR_7BIT;
+#if 1
+    // pico hwi2c
+    uint8_t dummy = 0x00;
+    msg.dat       = &dummy,
+    msg.len       = 1;
+#else
+    // swi2c ok
+    msg.dat = nullptr,
+    msg.len = 0;
+#endif
 
     println("i2cdev 7-bit address detector:");
     println("     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f");
@@ -106,14 +114,14 @@ err_t i2cdev_viewer(i2c_dev_t* dev, uint8_t start, uint8_t end, uint_fmt_e fmt)
     return true;
 }
 
-err_t i2cmst_read_bytes(i2c_bus_t* bus, uint16_t addr, uint8_t reg, uint8_t* dat, uint16_t len)
+err_t i2cmst_read_bytes(i2c_bus_t* bus, uint16_t addr, uint16_t reg, uint8_t* dat, uint16_t len)
 {
     i2c_msg_t msg[2];
 
     msg[0].addr = addr;
     msg[0].flgs = I2CMST_WRITE | I2CMST_NO_STOP;
-    msg[0].dat  = &reg;
-    msg[0].len  = 1;
+    msg[0].dat  = (uint8_t*)&reg;
+    msg[0].len  = (reg <= 0xFF) ? 1 : 2;
 
     msg[1].addr = addr;
     msg[1].flgs = I2CMST_RAED;
@@ -131,14 +139,14 @@ err_t i2cmst_read_bytes(i2c_bus_t* bus, uint16_t addr, uint8_t reg, uint8_t* dat
     return i2cmst_xfer(bus, msg, 2);
 }
 
-err_t i2cmst_write_bytes(i2c_bus_t* bus, uint16_t addr, uint8_t reg, uint8_t* dat, uint16_t len)
+err_t i2cmst_write_bytes(i2c_bus_t* bus, uint16_t addr, uint16_t reg, uint8_t* dat, uint16_t len)
 {
     i2c_msg_t msg[2];
 
     msg[0].addr = addr;
     msg[0].flgs = I2CMST_WRITE | I2CMST_NO_STOP;
-    msg[0].dat  = &reg;
-    msg[0].len  = 1;
+    msg[0].dat  = (uint8_t*)&reg;
+    msg[0].len  = (reg <= 0xFF) ? 1 : 2;
 
     msg[1].addr = addr;
     msg[1].flgs = I2CMST_WRITE | I2CMST_NO_START;
@@ -156,7 +164,7 @@ err_t i2cmst_write_bytes(i2c_bus_t* bus, uint16_t addr, uint8_t reg, uint8_t* da
     return i2cmst_xfer(bus, msg, 2);
 }
 
-err_t i2cdev_read_word(i2c_dev_t* dev, uint8_t reg, uint16_t* dat, endian_e endian)
+err_t i2cdev_read_word(i2c_dev_t* dev, uint16_t reg, uint16_t* dat, endian_e endian)
 {
     uint8_t buf[2];
 
@@ -179,7 +187,7 @@ err_t i2cdev_read_word(i2c_dev_t* dev, uint8_t reg, uint16_t* dat, endian_e endi
     return ret;
 }
 
-err_t i2cdev_write_word(i2c_dev_t* dev, uint8_t reg, uint16_t dat, endian_e endian)
+err_t i2cdev_write_word(i2c_dev_t* dev, uint16_t reg, uint16_t dat, endian_e endian)
 {
     if (endian != BIG_ENDIAN) {
         dat = (dat << 8) | (dat >> 8);
@@ -188,7 +196,7 @@ err_t i2cdev_write_word(i2c_dev_t* dev, uint8_t reg, uint16_t dat, endian_e endi
     return i2cdev_write_bytes(dev, reg, (uint8_t*)&dat, 2);
 }
 
-err_t i2cdev_read_mask(i2c_dev_t* dev, uint8_t reg, uint8_t msk, uint8_t* dat)
+err_t i2cdev_read_mask(i2c_dev_t* dev, uint16_t reg, uint8_t msk, uint8_t* dat)
 {
     uint8_t buf;
 
@@ -201,7 +209,7 @@ err_t i2cdev_read_mask(i2c_dev_t* dev, uint8_t reg, uint8_t msk, uint8_t* dat)
     return ret;
 }
 
-err_t i2cdev_write_mask(i2c_dev_t* dev, uint8_t reg, uint8_t msk, uint8_t dat)
+err_t i2cdev_write_mask(i2c_dev_t* dev, uint16_t reg, uint8_t msk, uint8_t dat)
 {
     uint8_t buf;
 

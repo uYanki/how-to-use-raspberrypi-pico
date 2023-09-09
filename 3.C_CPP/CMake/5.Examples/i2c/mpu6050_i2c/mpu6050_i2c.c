@@ -37,7 +37,7 @@ static int addr = 0x68;
 static void mpu6050_reset() {
     // Two byte reset. First byte register, second byte data
     // There are a load more options to set up the device in different ways that could be added here
-    uint8_t buf[] = {0x6B, 0x80};
+    uint8_t buf[] = {0x6B, 0x00};
     i2c_write_blocking(i2c_default, addr, buf, 2, false);
 }
 
@@ -86,7 +86,7 @@ int main() {
     printf("Hello, MPU6050! Reading raw data from registers...\n");
 
     // This example will use I2C0 on the default SDA and SCL pins (4, 5 on a Pico)
-    i2c_init(i2c_default, 400 * 1000);
+    i2c_init(i2c_default, 100 * 1000);
     gpio_set_function(PICO_DEFAULT_I2C_SDA_PIN, GPIO_FUNC_I2C);
     gpio_set_function(PICO_DEFAULT_I2C_SCL_PIN, GPIO_FUNC_I2C);
     gpio_pull_up(PICO_DEFAULT_I2C_SDA_PIN);
