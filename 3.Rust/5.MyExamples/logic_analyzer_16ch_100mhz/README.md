@@ -1,6 +1,4 @@
-[ula](b.com/dotcypress/ula) 
-
-[sigrok](https://sigrok.org/wiki/Downloads#Binaries_and_distribution_packages) 
+[sigrok](https://sigrok.org/wiki/Downloads#Binaries_and_distribution_packages) ，[ula](b.com/dotcypress/ula) 
 
 #### 烧录
 

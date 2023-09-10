@@ -10,3 +10,6 @@ $ENV:RUSTUP_UPDATE_ROOT='https://mirrors.ustc.edu.cn/rust-static/rustup'
 
 3、继续在此命令行下执行 rustup-init.exe
 
+---
+
+[SDK](https://github.com/rp-rs) 
