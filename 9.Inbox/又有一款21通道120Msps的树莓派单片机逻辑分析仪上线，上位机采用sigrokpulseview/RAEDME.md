@@ -1,1 +1,0 @@
-相比24通道的逻辑分析，这个少了3个通道，这三个通道是用于树莓派单片机自带的三路ADC使用了，采样率是500KHz。  https://github.com/pico-coder/sigrok-pico
